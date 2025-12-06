@@ -3,8 +3,16 @@
 # transformers
 # optimum[onnxruntime]
 
+# streamlit
+# torch
+# transformers
+# optimum
+# onnxruntime
+
 streamlit
 torch
-transformers
-optimum
-onnxruntime
+transformers==4.38.2  # A recently stable version
+optimum==1.17.1       # A version compatible with the transformers
+onnxruntime==1.17.3   # A version compatible with the optimum version
+numpy<2.0.0  # To avoid compatibility issues with some libraries
+
