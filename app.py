@@ -4,7 +4,9 @@ import numpy as np
 import time
 import os  # <--- Added this to make file size calculation work
 from transformers import AutoTokenizer
-from optimum.onnxruntime import ORTModelForSequenceClassification
+#from optimum.onnxruntime import ORTModelForSequenceClassification
+from transformers import BertTokenizer, BertForSequenceClassification
+from huggingface_hub import hf_hub_download
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -14,26 +16,32 @@ st.set_page_config(
 )
 
 st.title("💬 Sentiment Analysis on Naija Pidgin")
-st.markdown("Enter product review below to analyze sentiment using our state-of-the-art model")
+st.markdown("Enter product review below to analyze sentiment using our state-of-the-art ransformer model")
 
 # --- Model Configuration ---
-MODEL_ID = "BinBashir/NaijaDistilBERT-Jumia-Int8-ONNX"
+#MODEL_ID = "BinBashir/NaijaDistilBERT-Jumia-Int8-ONNX"
+MODEL_ID = "BinBashir/TinyBERT-jumia"
 
 @st.cache_resource
 def get_model():
     """
     Loads the Tokenizer and the ONNX Model.
     """
-    # Load Tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+    # # Load Tokenizer
+    # tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+    # # Load ONNX Model
+    # provider = "CUDAExecutionProvider" if torch.cuda.is_available() else "CPUExecutionProvider"
+    # model = ORTModelForSequenceClassification.from_pretrained(
+    #     MODEL_ID,
+    #     provider=provider
+    # )
+    tokenizer = BertTokenizer.from_pretrained(MODEL_ID
+                                                  #, force_download=False
+                                                  )
+    model = BertForSequenceClassification.from_pretrained(MODEL_ID
+                                                #,force_download=False
+                                                )
 
-    # Load ONNX Model
-    provider = "CUDAExecutionProvider" if torch.cuda.is_available() else "CPUExecutionProvider"
-    
-    model = ORTModelForSequenceClassification.from_pretrained(
-        MODEL_ID,
-        provider=provider
-    )
     
     return tokenizer, model
 
@@ -45,8 +53,16 @@ try:
     # --- Model Size Logic (Integrated Here) ---
     # We place this here so it runs once after loading
     try:
+
+
+        # 👇 NEW LOGIC: Use hf_hub_download to get the exact path to the 'pytorch_model.bin' file
+        model_weights_path = hf_hub_download(
+            repo_id=MODEL_ID,
+            filename="model.safetensors"
+            
+        )
         # model.model_path points to the actual .onnx file path in the cache
-        file_size = os.path.getsize(model.model_path) 
+        file_size = os.path.getsize(model_weights_path) 
         file_size_mb = file_size / (1024 * 1024)
         
         # Displaying it in a nice column layout or directly
@@ -111,3 +127,4 @@ if user_input and button:
     
     # Display Inference Speed
     st.info(f"⚡ Inference Speed: {inference_time:.4f} seconds")
+
