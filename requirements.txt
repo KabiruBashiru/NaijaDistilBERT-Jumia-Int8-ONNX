@@ -3,3 +3,4 @@ torch
 transformers==4.38.2 
 numpy<2.0.0
 huggingface-hub
+optimum[onnxruntime]
