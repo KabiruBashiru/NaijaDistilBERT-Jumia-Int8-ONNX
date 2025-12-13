@@ -1,11 +1,9 @@
 import streamlit as st
 import torch
 import numpy as np
-import time
-import os
+import time 
 from transformers import AutoTokenizer
 from optimum.onnxruntime import ORTModelForSequenceClassification
-from huggingface_hub import hf_hub_download, list_repo_files  # Added list_repo_files
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -15,10 +13,16 @@ st.set_page_config(
 )
 
 st.title("💬 Sentiment Analysis on Naija Pidgin")
-st.markdown("Enter product review below to analyze sentiment using our state-of-the-art transformer model")
+st.markdown("Enter product review below to analyze sentiment using our state-of-the-art model")
 
 # --- Model Configuration ---
+# MODEL_ID = "BinBashir/Q_ONNX_distil_NaijaBERT_on_jumia_dataset"
+# MODEL_ID = "BinBashir/Q_ONNX_TinyNaijaBERT_on_jumia_dataset"
+# MODEL_ID = "BinBashir/Q_ONNX_Mini_NaijaBERT_on_jumia_dataset"
+
 MODEL_ID = "BinBashir/NaijaDistilBERT-Jumia-Int8-ONNX"
+
+
 
 @st.cache_resource
 def get_model():
@@ -26,57 +30,30 @@ def get_model():
     Loads the Tokenizer and the ONNX Model.
     """
     # Load Tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-    
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID,
+                                            #    force_download=True
+                                               )
+
     # Load ONNX Model
     provider = "CUDAExecutionProvider" if torch.cuda.is_available() else "CPUExecutionProvider"
     
     model = ORTModelForSequenceClassification.from_pretrained(
         MODEL_ID,
         provider=provider
+        # force_download=True
     )
+    
     return tokenizer, model
 
 # --- Load Model ---
 try:
     with st.spinner(f"Loading {MODEL_ID} Model..."):
         tokenizer, model = get_model()
-
-    # --- Model Size Logic (Fixed) ---
-    try:
-        # 1. Get list of all files in the Hugging Face repo
-        repo_files = list_repo_files(repo_id=MODEL_ID)
-        
-        # 2. Find the first file that ends with '.onnx' 
-        # (This finds 'model.onnx', 'model_quantized.onnx', etc. automatically)
-        onnx_filename = next((f for f in repo_files if f.endswith('.onnx')), None)
-        
-        if onnx_filename:
-            # 3. Download that specific file path to calculate size
-            model_weights_path = hf_hub_download(
-                repo_id=MODEL_ID,
-                filename=onnx_filename
-            )
-            
-            file_size = os.path.getsize(model_weights_path) 
-            file_size_mb = file_size / (1024 * 1024)
-            
-            st.success("Model Loaded Successfully!")
-            st.metric(label=f"💾 Model Size ({onnx_filename})", value=f"{file_size_mb:.2f} MB")
-        else:
-            st.warning("Model loaded, but could not find an .onnx file to calculate size.")
-            
-    except Exception as e:
-        # If size calculation fails, just show a warning but keep the app running
-        st.warning(f"Could not calculate size (Internet/API error): {e}")
-        st.success("Model Loaded Successfully!")
-
 except Exception as e:
-    st.error(f"Error loading model. Please check the Model ID or libraries.\nDetails: {e}")
+    st.error(f"Error loading model from Hugging Face. Please check the Model ID.\nDetails: {e}")
     st.stop()
 
 # --- User Input ---
-st.divider()
 user_input = st.text_area('Enter Text to Analyze')
 
 button = st.button("Analyze Sentiment", type="primary", use_container_width=True)
@@ -100,11 +77,13 @@ if user_input and button:
     )
 
     # 2. Inference & Timing
+    # Start the timer
     start_time = time.time()
 
     with torch.no_grad():
         output = model(**inputs)
 
+    # Stop the timer
     end_time = time.time()
     inference_time = end_time - start_time
 
@@ -114,10 +93,13 @@ if user_input and button:
     if isinstance(logits, torch.Tensor):
         logits = logits.cpu().numpy()
         
+    st.write("Logits:", logits)
+    
+    # Get prediction
     y_pred = int(np.argmax(logits, axis=1)[0])
     
     # Display Result
-    result_label = d.get(y_pred, f"Unknown Label ({y_pred})")
+    st.success(f"Prediction: {d[y_pred]}")
     
-    st.success(f"Prediction: {result_label}")
+    # Display Inference Speed
     st.info(f"⚡ Inference Speed: {inference_time:.4f} seconds")
