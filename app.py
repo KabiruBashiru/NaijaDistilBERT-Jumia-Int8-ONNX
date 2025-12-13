@@ -97,14 +97,14 @@ if user_input and button:
         padding=True, 
         truncation=True, 
         max_length=512, 
-        return_tensors='pt'
+        return_tensors='np'
     )
 
     # 2. Inference & Timing
     start_time = time.time()
 
-    with torch.no_grad():
-        output = model(**inputs)
+    #with torch.no_grad():
+    output = model(**inputs)
 
     end_time = time.time()
     inference_time = end_time - start_time

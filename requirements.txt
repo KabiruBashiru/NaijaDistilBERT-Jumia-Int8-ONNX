@@ -1,10 +1,17 @@
+# streamlit
+# torch --index-url https://download.pytorch.org/whl/cpu
+# transformers==4.38.2
+# numpy<2.0.0
+# huggingface-hub
+# optimum
+# onnxruntime
+
+
 streamlit
 torch --index-url https://download.pytorch.org/whl/cpu
-transformers==4.38.2
-numpy<2.0.0
-huggingface-hub
-optimum
-onnxruntime
-
+numpy
+transformers
+optimum[onnxruntime]
+huggingface_hub
 
 
