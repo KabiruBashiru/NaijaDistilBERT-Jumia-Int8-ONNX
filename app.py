@@ -9,12 +9,14 @@ from huggingface_hub import hf_hub_download, list_repo_files  # Added list_repo_
 
 # --- Page Configuration ---
 st.set_page_config(
-    page_title="Sentiment Analysis",
+    # page_title="Sentiment Analysis",
+    page_title="Jumia-Senti",
     page_icon="💬",
     layout="centered"
 )
 
-st.title("💬 Sentiment Analysis on Naija Pidgin")
+# st.title("💬 Sentiment Analysis on Naija Pidgin")
+st.title("💬 Jumia-Senti: Sentiment Analysis on Product Review")
 st.markdown("Enter product review below to analyze sentiment using our state-of-the-art transformer model")
 
 # --- Model Configuration ---
